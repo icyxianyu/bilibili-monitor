@@ -1,0 +1,13 @@
+{
+  "name": "bilibili-monitor",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "build": "pnpm --filter '@bilibili-monitor/shared' build && pnpm --parallel --filter './apps/*' build",
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:web": "pnpm --filter web dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

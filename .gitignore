@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.next/
+data/
+.env
+*.db
+*.db-shm
+*.db-wal
+.pnpm-store/
+*.log
