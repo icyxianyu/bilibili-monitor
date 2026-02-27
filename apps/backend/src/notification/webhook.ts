@@ -7,12 +7,13 @@ import { getStreamStatus } from '../db/repositories/streamStatus.js';
 export async function sendWebhook(event: MonitorEvent): Promise<void> {
   if (!config.WEBHOOK_URL) return;
 
-  const status = getStreamStatus(config.BILIBILI_ROOM_ID);
+  const roomId = event.roomId;
+  const status = getStreamStatus(roomId);
 
   const payload: WebhookPayload = {
     event,
     stream: {
-      roomId: config.BILIBILI_ROOM_ID,
+      roomId,
       title: status?.title ?? '',
       liveStatus: status?.liveStatus ?? 0,
       areaName: status?.areaName ?? '',

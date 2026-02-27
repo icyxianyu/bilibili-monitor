@@ -8,3 +8,5 @@ data/
 *.db-wal
 .pnpm-store/
 *.log
+.DS_Store
+**/.DS_Store

@@ -1,8 +1,7 @@
 import { getRoomInfo } from './api.js';
 import { eventBus } from '../core/event-bus.js';
-import { upsertStreamStatus, getStreamStatus } from '../db/repositories/streamStatus.js';
+import { upsertStreamStatus } from '../db/repositories/streamStatus.js';
 import { insertEvent } from '../db/repositories/events.js';
-import { config } from '../config/index.js';
 import { randomUUID } from 'crypto';
 import type { RoomInfo } from '@bilibili-monitor/shared';
 
@@ -13,12 +12,24 @@ export class HttpPoller {
   private lastInfo: RoomInfo | null = null;
   private stopped = false;
 
-  async start(): Promise<void> {
+  constructor(private readonly roomId: number) {}
+
+  async start(initialInfo?: RoomInfo): Promise<void> {
     this.stopped = false;
-    await this.poll(); // immediate first poll
-    this.timer = setInterval(() => {
-      if (!this.stopped) this.poll();
-    }, POLL_INTERVAL_MS);
+    if (initialInfo) {
+      // Use already-fetched info to populate DB immediately without an extra API call
+      upsertStreamStatus(initialInfo);
+      eventBus.emitStreamStatus({ roomId: this.roomId, liveStatus: initialInfo.liveStatus, title: initialInfo.title });
+      this.lastInfo = initialInfo;
+      this.timer = setInterval(() => {
+        if (!this.stopped) this.poll();
+      }, POLL_INTERVAL_MS);
+    } else {
+      await this.poll(); // immediate first poll
+      this.timer = setInterval(() => {
+        if (!this.stopped) this.poll();
+      }, POLL_INTERVAL_MS);
+    }
   }
 
   stop(): void {
@@ -31,9 +42,9 @@ export class HttpPoller {
 
   private async poll(): Promise<void> {
     try {
-      const info = await getRoomInfo(config.BILIBILI_ROOM_ID);
+      const info = await getRoomInfo(this.roomId);
       upsertStreamStatus(info);
-      eventBus.emitStreamStatus({ liveStatus: info.liveStatus, title: info.title });
+      eventBus.emitStreamStatus({ roomId: this.roomId, liveStatus: info.liveStatus, title: info.title });
 
       if (this.lastInfo) {
         this.detectChanges(this.lastInfo, info);

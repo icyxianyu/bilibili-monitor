@@ -3,8 +3,8 @@ import type { MonitorEvent } from '@bilibili-monitor/shared';
 
 type EventBusEvents = {
   'monitor:event': [event: MonitorEvent];
-  'danmaku': [data: { uid: number; username: string; content: string; timestamp: number }];
-  'stream:status': [data: { liveStatus: number; title: string }];
+  'danmaku': [data: { roomId: number; uid: number; username: string; content: string; timestamp: number }];
+  'stream:status': [data: { roomId: number; liveStatus: number; title: string }];
 };
 
 class EventBus extends EventEmitter {

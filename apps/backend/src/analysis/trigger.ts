@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { eventBus } from '../core/event-bus.js';
-import { insertEvent, getLatestEventByType } from '../db/repositories/events.js';
+import { insertEvent, getLatestAutoAnalysis } from '../db/repositories/events.js';
 import { getRecentDanmaku } from '../db/repositories/danmaku.js';
 import { analyzeDanmaku } from './llm-client.js';
 import { config } from '../config/index.js';
@@ -24,6 +24,7 @@ export class DanmakuTrigger {
   private lastTriggerTime = 0;
   private periodicTimer: ReturnType<typeof setInterval> | null = null;
   private isLive = false;
+  private streamStatusListener: ((data: { roomId: number; liveStatus: number; title: string }) => void) | null = null;
 
   constructor(private readonly roomId: number) {}
 
@@ -35,16 +36,21 @@ export class DanmakuTrigger {
       }
     }, PERIODIC_INTERVAL_MS);
 
-    // Listen to stream status
-    eventBus.onStreamStatus(({ liveStatus }) => {
-      this.isLive = liveStatus === 1;
-    });
+    // Listen to stream status, filter by roomId
+    this.streamStatusListener = ({ roomId, liveStatus }) => {
+      if (roomId === this.roomId) this.isLive = liveStatus === 1;
+    };
+    eventBus.onStreamStatus(this.streamStatusListener);
   }
 
   stop(): void {
     if (this.periodicTimer) {
       clearInterval(this.periodicTimer);
       this.periodicTimer = null;
+    }
+    if (this.streamStatusListener) {
+      eventBus.removeListener('stream:status', this.streamStatusListener);
+      this.streamStatusListener = null;
     }
   }
 
@@ -110,6 +116,7 @@ export class DanmakuTrigger {
       return;
     }
     try {
+      const windowUntil = Date.now();
       const recentDanmaku = getRecentDanmaku(this.roomId, 100);
       if (recentDanmaku.length === 0) return;
 
@@ -117,8 +124,10 @@ export class DanmakuTrigger {
         .reverse()
         .map((d) => `${d.username}: ${d.content}`);
 
-      // Get previous LLM summary for diff
-      const prevEvent = getLatestEventByType(this.roomId, 'llm_analysis') as LlmAnalysisEvent | null;
+      const windowSince = recentDanmaku[0]?.timestamp ?? windowUntil - 10 * 60_000;
+
+      // Only use previous auto-analysis as context, not manual ones
+      const prevEvent = getLatestAutoAnalysis(this.roomId) as LlmAnalysisEvent | null;
       const previousSummary = prevEvent?.summary;
 
       console.log(`[Trigger] Running LLM analysis (${trigger}) on ${danmakuContents.length} messages`);
@@ -128,7 +137,10 @@ export class DanmakuTrigger {
         id: randomUUID(),
         roomId: this.roomId,
         type: 'llm_analysis',
-        createdAt: new Date(),
+        createdAt: new Date(windowUntil),
+        trigger: 'auto',
+        windowSince,
+        windowUntil,
         summary: result.summary,
         sentiment: result.sentiment,
         significantChange: result.significantChange,

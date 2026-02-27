@@ -11,7 +11,6 @@ dotenvConfig({ path: resolve(process.cwd(), '.env') });
 
 const envSchema = z.object({
   // Bilibili
-  BILIBILI_ROOM_ID: z.string().transform(Number).pipe(z.number().int().positive()),
   BILIBILI_COOKIE: z.string().optional().default(''),
 
   // LLM

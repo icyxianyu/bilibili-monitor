@@ -1,8 +1,9 @@
 {
   "name": "bilibili-monitor",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "dev": "node dev.js",
     "build": "pnpm --filter '@bilibili-monitor/shared' build && pnpm --parallel --filter './apps/*' build",
     "dev:backend": "pnpm --filter backend dev",
     "dev:web": "pnpm --filter web dev"

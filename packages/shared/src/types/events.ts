@@ -48,6 +48,12 @@ export interface LlmAnalysisEvent extends BaseEvent {
   significantChange: boolean;
   changeDescription?: string;
   topKeywords: string[];
+  /** How this analysis was triggered */
+  trigger: 'auto' | 'manual';
+  /** Unix ms — start of the danmaku window analyzed */
+  windowSince: number;
+  /** Unix ms — end of the danmaku window analyzed */
+  windowUntil: number;
 }
 
 export type MonitorEvent =

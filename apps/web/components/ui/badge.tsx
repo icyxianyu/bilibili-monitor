@@ -7,18 +7,18 @@ interface BadgeProps {
 }
 
 const variantClasses: Record<string, string> = {
-  default: 'bg-primary text-primary-foreground hover:bg-primary/80',
-  secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-  destructive: 'bg-red-500 text-white hover:bg-red-500/80',
-  outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-  success: 'bg-green-500 text-white hover:bg-green-500/80',
+  default: 'bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20',
+  secondary: 'bg-secondary text-secondary-foreground border border-border hover:bg-secondary/80',
+  destructive: 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100',
+  outline: 'border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
+  success: 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100',
 };
 
 export function Badge({ variant = 'default', className, children }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors',
+        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
         variantClasses[variant],
         className,
       )}
